@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>5-String Bass Drop A Tuning Fretboard</title>
     <style>
+        /* ===== BASE STYLES ===== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -35,6 +36,7 @@
             font-weight: 300;
         }
         
+        /* ===== FRETBORD STYLES ===== */
         .fretboard {
             display: flex;
             flex-direction: column-reverse;
@@ -84,7 +86,7 @@
         .string.bass::before { height: 4px; }
         .string.bass-low::before { height: 6px; }
         
-                
+        /* ===== NOTE STYLES ===== */
         .open-note {
             width: 40px;
             height: 40px;
@@ -146,8 +148,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
         
-        /* Note colors based on current scale */
-        
+        /* ===== CONTROL STYLES ===== */
         .controls {
             margin: 20px 0;
             text-align: center;
@@ -198,190 +199,247 @@
         </div>
         
         <div class="fretboard" id="fretboard"></div>
-        
     </div>
 
     <script>
-        const notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
-        const tuning = ['A', 'E', 'A', 'D', 'G']; // Drop A tuning
-        const numFrets = 12;
-        
-        let aMinorOnly = false;
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            notes: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'],
+            tuning: ['A', 'E', 'A', 'D', 'G'], // Drop A tuning
+            numFrets: 12,
+            colors: {
+                root: ['#e74c3c', '#c0392b'],
+                pentatonic: ['#3498db', '#2980b9'],
+                scale: ['#2ecc71', '#27ae60'],
+                nonScale: ['#f1c40f', '#f39c12']
+            },
+            buttonMap: {
+                'A_minor': 'aminor-btn',
+                'B_minor': 'bminor-btn',
+                'E_minor': 'eminor-btn',
+                'D_minor': 'dminor-btn',
+                'C_major': 'cmajor-btn',
+                'D_major': 'dmajor-btn'
+            }
+        };
+
+        // ===== STATE =====
         let currentScale = null;
-        
-        function getScaleNotes(root) {
-            const scales = {
-                'A_minor': ['A', 'B', 'C', 'D', 'E', 'F', 'G'], // A minor
-                'B_minor': ['B', 'C#', 'D', 'E', 'F#', 'G', 'A'], // B minor
-                'E_minor': ['E', 'F#', 'G', 'A', 'B', 'C', 'D'], // E minor
-                'D_minor': ['D', 'E', 'F', 'G', 'A', 'Bb', 'C'], // D minor
-                'C_major': ['C', 'D', 'E', 'F', 'G', 'A', 'B'], // C major
-                'D_major': ['D', 'E', 'F#', 'G', 'A', 'B', 'C#'] // D major
-            };
-            return scales[root] || [];
+
+        // ===== DATA =====
+        const SCALES = {
+            'A_minor': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+            'B_minor': ['B', 'C#', 'D', 'E', 'F#', 'G', 'A'],
+            'E_minor': ['E', 'F#', 'G', 'A', 'B', 'C', 'D'],
+            'D_minor': ['D', 'E', 'F', 'G', 'A', 'Bb', 'C'],
+            'C_major': ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+            'D_major': ['D', 'E', 'F#', 'G', 'A', 'B', 'C#']
+        };
+
+        const PENTATONIC_NOTES = {
+            'A_minor': ['C', 'D', 'E', 'G'],
+            'B_minor': ['D', 'E', 'F#', 'A'],
+            'E_minor': ['G', 'A', 'B', 'D'],
+            'D_minor': ['F', 'G', 'A', 'C'],
+            'C_major': ['D', 'E', 'G', 'A'],
+            'D_major': ['E', 'F#', 'A', 'B']
+        };
+
+        const DEFAULT_COLORS = {
+            'A': CONFIG.colors.root,
+            'B': CONFIG.colors.scale,
+            'C': CONFIG.colors.pentatonic,
+            'D': CONFIG.colors.pentatonic,
+            'E': CONFIG.colors.pentatonic,
+            'F': CONFIG.colors.nonScale,
+            'G': CONFIG.colors.pentatonic,
+            'F#': CONFIG.colors.nonScale,
+            'G#': CONFIG.colors.nonScale,
+            'A#': CONFIG.colors.nonScale,
+            'C#': CONFIG.colors.nonScale,
+            'D#': CONFIG.colors.nonScale,
+            'Bb': CONFIG.colors.nonScale
+        };
+
+        // ===== UTILITY FUNCTIONS =====
+        function normalizeNote(note) {
+            return note.replace('#', 's');
         }
-        
+
+        function createGradient(colorPair) {
+            return `radial-gradient(circle, ${colorPair[0]} 0%, ${colorPair[1]} 100%)`;
+        }
+
+        function insertColorRule(selector, colorPair) {
+            const styleSheet = document.styleSheets[0];
+            const gradient = createGradient(colorPair);
+            styleSheet.insertRule(`${selector} { background: ${gradient}; }`);
+        }
+
+        // ===== CORE FUNCTIONS =====
+        function getScaleNotes(root) {
+            return SCALES[root] || [];
+        }
+
         function getNoteAtFret(openNote, fret) {
-            const openIndex = notes.indexOf(openNote);
+            const openIndex = CONFIG.notes.indexOf(openNote);
             const noteIndex = (openIndex + fret) % 12;
-            let note = notes[noteIndex];
+            let note = CONFIG.notes[noteIndex];
             
             // Handle enharmonic equivalents for flats
             if ((currentScale === 'D_minor' || currentScale === 'D_major') && note === 'A#') {
-                note = 'Bb'; // In D scales, A# should be displayed as Bb
+                note = 'Bb';
             }
             
             return note;
         }
-        
-        function updateNoteColors() {
-            // Remove all existing note color classes
+
+        function clearColorRules() {
             const styleSheet = document.styleSheets[0];
             const rules = styleSheet.cssRules || styleSheet.rules;
             
-            // Remove note color rules
             for (let i = rules.length - 1; i >= 0; i--) {
-                if (rules[i].selectorText && (rules[i].selectorText.includes('.note-') || rules[i].selectorText.includes('.open-note.'))) {
+                if (rules[i].selectorText && 
+                    (rules[i].selectorText.includes('.note-') || 
+                     rules[i].selectorText.includes('.open-note.'))) {
                     styleSheet.deleteRule(i);
                 }
             }
-            
-            // Add new color rules based on current scale
-            if (currentScale) {
-                const scaleNotes = getScaleNotes(currentScale);
-                const rootNote = currentScale.split('_')[0]; // Extract note name from scale name
-                
-                // Root note - Red
-                styleSheet.insertRule(`.fret-circle.note-${rootNote.replace('#', 's')} { background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%); }`);
-                styleSheet.insertRule(`.open-note.note-${rootNote.replace('#', 's')} { background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%); }`);
-                
-                // Pentatonic notes (root, minor 3rd, 4th, 5th, minor 7th) - Blue
-                const pentatonicNotes = {
-                    'A_minor': ['C', 'D', 'E', 'G'],
-                    'B_minor': ['D', 'E', 'F#', 'A'],
-                    'E_minor': ['G', 'A', 'B', 'D'],
-                    'D_minor': ['F', 'G', 'A', 'C'],
-                    'C_major': ['D', 'E', 'G', 'A'], // C major pentatonic
-                    'D_major': ['E', 'F#', 'A', 'B'] // D major pentatonic
-                };
-                
-                if (pentatonicNotes[currentScale]) {
-                    pentatonicNotes[currentScale].forEach(note => {
-                        styleSheet.insertRule(`.fret-circle.note-${note.replace('#', 's')} { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }`);
-                        styleSheet.insertRule(`.open-note.note-${note.replace('#', 's')} { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }`);
-                    });
+        }
+
+        function applyScaleColors() {
+            if (!currentScale) {
+                applyDefaultColors();
+                return;
+            }
+
+            const scaleNotes = getScaleNotes(currentScale);
+            const rootNote = currentScale.split('_')[0];
+            const pentatonicNotes = PENTATONIC_NOTES[currentScale] || [];
+
+            // Root notes
+            insertColorRule(`.fret-circle.note-${normalizeNote(rootNote)}`, CONFIG.colors.root);
+            insertColorRule(`.open-note.note-${normalizeNote(rootNote)}`, CONFIG.colors.root);
+
+            // Pentatonic notes
+            pentatonicNotes.forEach(note => {
+                insertColorRule(`.fret-circle.note-${normalizeNote(note)}`, CONFIG.colors.pentatonic);
+                insertColorRule(`.open-note.note-${normalizeNote(note)}`, CONFIG.colors.pentatonic);
+            });
+
+            // Other scale notes
+            scaleNotes.forEach(note => {
+                if (note !== rootNote && !pentatonicNotes.includes(note)) {
+                    insertColorRule(`.fret-circle.note-${normalizeNote(note)}`, CONFIG.colors.scale);
+                    insertColorRule(`.open-note.note-${normalizeNote(note)}`, CONFIG.colors.scale);
                 }
-                
-                // Other scale notes - Green
-                scaleNotes.forEach(note => {
-                    if (note !== rootNote && (!pentatonicNotes[currentScale] || !pentatonicNotes[currentScale].includes(note))) {
-                        styleSheet.insertRule(`.fret-circle.note-${note.replace('#', 's')} { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }`);
-                        styleSheet.insertRule(`.open-note.note-${note.replace('#', 's')} { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }`);
-                    }
-                });
-                
-                // Non-scale notes - Yellow
-                notes.forEach(note => {
-                    if (!scaleNotes.includes(note)) {
-                        styleSheet.insertRule(`.fret-circle.note-${note.replace('#', 's')} { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }`);
-                        styleSheet.insertRule(`.open-note.note-${note.replace('#', 's')} { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }`);
-                    }
-                });
-                
-                // Handle Bb specifically (replace 'Bb' with 'Bb' in CSS selector)
-                if (scaleNotes.includes('Bb')) {
-                    styleSheet.insertRule('.fret-circle.note-Bb { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }');
-                    styleSheet.insertRule('.open-note.note-Bb { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }');
+            });
+
+            // Non-scale notes
+            CONFIG.notes.forEach(note => {
+                if (!scaleNotes.includes(note)) {
+                    insertColorRule(`.fret-circle.note-${normalizeNote(note)}`, CONFIG.colors.nonScale);
+                    insertColorRule(`.open-note.note-${normalizeNote(note)}`, CONFIG.colors.nonScale);
                 }
-                
-                // Handle C# specifically for D major
-                if (scaleNotes.includes('C#')) {
-                    styleSheet.insertRule('.fret-circle.note-Cs { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }');
-                    styleSheet.insertRule('.open-note.note-Cs { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }');
-                }
-            } else {
-                // Default coloring (no scale selected)
-                styleSheet.insertRule('.fret-circle.note-A { background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%); }'); /* A - Red */
-                styleSheet.insertRule('.open-note.note-A { background: radial-gradient(circle, #e74c3c 0%, #c0392b 100%); }'); /* A - Red */
-                styleSheet.insertRule('.fret-circle.note-B { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }'); /* B - Green */
-                styleSheet.insertRule('.open-note.note-B { background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%); }'); /* B - Green */
-                styleSheet.insertRule('.fret-circle.note-C { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* C - Blue */
-                styleSheet.insertRule('.open-note.note-C { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* C - Blue */
-                styleSheet.insertRule('.fret-circle.note-D { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* D - Blue */
-                styleSheet.insertRule('.open-note.note-D { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* D - Blue */
-                styleSheet.insertRule('.fret-circle.note-E { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* E - Blue */
-                styleSheet.insertRule('.open-note.note-E { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* E - Blue */
-                styleSheet.insertRule('.fret-circle.note-F { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* F - Yellow */
-                styleSheet.insertRule('.open-note.note-F { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* F - Yellow */
-                styleSheet.insertRule('.fret-circle.note-Fs, .fret-circle.note-Gs { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* F#, G# - Yellow */
-                styleSheet.insertRule('.open-note.note-Fs, .open-note.note-Gs { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* F#, G# - Yellow */
-                styleSheet.insertRule('.fret-circle.note-G { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* G - Blue */
-                styleSheet.insertRule('.open-note.note-G { background: radial-gradient(circle, #3498db 0%, #2980b9 100%); }'); /* G - Blue */
-                styleSheet.insertRule('.fret-circle.note-As, .fret-circle.note-Cs, .fret-circle.note-Ds { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* A#, C#, D# - Yellow */
-                styleSheet.insertRule('.open-note.note-As, .open-note.note-Cs, .open-note.note-Ds { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* A#, C#, D# - Yellow */
-                styleSheet.insertRule('.fret-circle.note-Bb { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* Bb - Yellow */
-                styleSheet.insertRule('.open-note.note-Bb { background: radial-gradient(circle, #f1c40f 0%, #f39c12 100%); }'); /* Bb - Yellow */
+            });
+
+            // Handle special cases
+            if (scaleNotes.includes('Bb')) {
+                insertColorRule('.fret-circle.note-Bb', CONFIG.colors.scale);
+                insertColorRule('.open-note.note-Bb', CONFIG.colors.scale);
+            }
+            if (scaleNotes.includes('C#')) {
+                insertColorRule('.fret-circle.note-Cs', CONFIG.colors.scale);
+                insertColorRule('.open-note.note-Cs', CONFIG.colors.scale);
             }
         }
-        
+
+        function applyDefaultColors() {
+            Object.entries(DEFAULT_COLORS).forEach(([note, colors]) => {
+                const normalizedNote = normalizeNote(note);
+                if (note.includes('#')) {
+                    const sharpNotes = note === 'F#' ? 'Fs, .note-Gs' : 
+                                     note === 'G#' ? 'Gs' : 
+                                     note === 'A#' ? 'As, .note-Cs, .note-Ds' : 
+                                     note === 'C#' ? 'Cs' : 'Ds';
+                    insertColorRule(`.fret-circle.note-${sharpNotes}`, colors);
+                    insertColorRule(`.open-note.note-${sharpNotes}`, colors);
+                } else {
+                    insertColorRule(`.fret-circle.note-${normalizedNote}`, colors);
+                    insertColorRule(`.open-note.note-${normalizedNote}`, colors);
+                }
+            });
+        }
+
+        function updateNoteColors() {
+            clearColorRules();
+            applyScaleColors();
+        }
+
+        function createNut() {
+            const nut = document.createElement('div');
+            nut.className = 'nut';
+            return nut;
+        }
+
+        function createOpenNote(note) {
+            const openNoteDiv = document.createElement('div');
+            openNoteDiv.className = 'open-note';
+            openNoteDiv.classList.add(`note-${normalizeNote(note)}`);
+            openNoteDiv.textContent = note;
+            return openNoteDiv;
+        }
+
+        function createFretCircle(note) {
+            const fretCircle = document.createElement('div');
+            fretCircle.className = 'fret-circle';
+            fretCircle.classList.add(`note-${normalizeNote(note)}`);
+            fretCircle.textContent = note;
+            return fretCircle;
+        }
+
+        function createFretMarker() {
+            const marker = document.createElement('div');
+            marker.className = 'fret-marker';
+            return marker;
+        }
+
+        function createString(stringIndex) {
+            const stringDiv = document.createElement('div');
+            stringDiv.className = 'string';
+            
+            // Add string thickness classes
+            if (stringIndex === 0) stringDiv.classList.add('bass-low');
+            else if (stringIndex === 1) stringDiv.classList.add('bass');
+            
+            return stringDiv;
+        }
+
         function createFretboard() {
             const fretboard = document.getElementById('fretboard');
             fretboard.innerHTML = '';
             
             // Add nut
-            const nut = document.createElement('div');
-            nut.className = 'nut';
-            fretboard.appendChild(nut);
+            fretboard.appendChild(createNut());
             
-            // Update note colors based on current scale
+            // Update colors
             updateNoteColors();
             
-            for (let string = 0; string < tuning.length; string++) {
-                const stringDiv = document.createElement('div');
-                stringDiv.className = 'string';
+            // Create strings
+            for (let stringIndex = 0; stringIndex < CONFIG.tuning.length; stringIndex++) {
+                const stringDiv = createString(stringIndex);
+                const openNote = CONFIG.tuning[stringIndex];
                 
-                // Add string thickness classes
-                if (string === 0) {
-                    stringDiv.classList.add('bass-low'); // Lowest string (B)
-                } else if (string === 1) {
-                    stringDiv.classList.add('bass'); // Second lowest string (E)
-                }
+                // Add open note
+                stringDiv.appendChild(createOpenNote(openNote));
                 
-                // Open note
-                const openNoteDiv = document.createElement('div');
-                openNoteDiv.className = 'open-note';
-                
-                // Add note class for coloring
-                const openNoteClass = 'note-' + tuning[string].replace('#', 's');
-                openNoteDiv.classList.add(openNoteClass);
-                
-                openNoteDiv.textContent = tuning[string];
-                stringDiv.appendChild(openNoteDiv);
-                
-                // Frets
-                for (let fret = 1; fret <= numFrets; fret++) {
+                // Add frets
+                for (let fret = 1; fret <= CONFIG.numFrets; fret++) {
                     const fretDiv = document.createElement('div');
                     fretDiv.className = 'fret';
                     
-                    const note = getNoteAtFret(tuning[string], fret);
-                    
-                    // Create circle for note
-                    const fretCircle = document.createElement('div');
-                    fretCircle.className = 'fret-circle';
-                    
-                    // Add note class for coloring
-                    const noteClass = 'note-' + note.replace('#', 's');
-                    fretCircle.classList.add(noteClass);
-                    
-                    fretCircle.textContent = note;
-                    fretDiv.appendChild(fretCircle);
-                    
-                    // Add fret markers
-                    if (string === 0 && (fret === 3 || fret === 5 || fret === 7 || fret === 9 || fret === 12)) {
-                        const marker = document.createElement('div');
-                        marker.className = 'fret-marker';
-                        fretDiv.appendChild(marker);
-                    }
+                    const note = getNoteAtFret(openNote, fret);
+                    const fretCircle = createFretCircle(note);
                     
                     // Apply scale filter
                     if (currentScale) {
@@ -391,13 +449,20 @@
                         }
                     }
                     
+                    fretDiv.appendChild(fretCircle);
+                    
+                    // Add fret markers on first string
+                    if (stringIndex === 0 && [3, 5, 7, 9, 12].includes(fret)) {
+                        fretDiv.appendChild(createFretMarker());
+                    }
+                    
                     stringDiv.appendChild(fretDiv);
                 }
                 
                 fretboard.appendChild(stringDiv);
             }
         }
-        
+
         function toggleScale(root) {
             // Clear all active states
             document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
@@ -406,22 +471,14 @@
                 currentScale = null;
             } else {
                 currentScale = root;
-                // Map scale names to button IDs
-                const buttonMap = {
-                    'A_minor': 'aminor-btn',
-                    'B_minor': 'bminor-btn',
-                    'E_minor': 'eminor-btn',
-                    'D_minor': 'dminor-btn',
-                    'C_major': 'cmajor-btn',
-                    'D_major': 'dmajor-btn'
-                };
-                document.getElementById(buttonMap[root]).classList.add('active');
+                document.getElementById(CONFIG.buttonMap[root]).classList.add('active');
             }
+            
             createFretboard();
         }
-        
-        // Initialize fretboard
-        createFretboard();
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', createFretboard);
     </script>
 </body>
 </html>
