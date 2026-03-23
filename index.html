@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bass Fretboard Visualizer | Interactive Music Tool</title>
+    <meta name="description" content="Interactive 5-string bass fretboard visualizer with scale visualization in Drop A tuning">
+    <meta name="keywords" content="bass, guitar, fretboard, scales, music theory, drop a tuning, visualizer">
+    <meta name="author" content="Bass Fretboard Visualizer">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Bass Fretboard Visualizer">
+    <meta property="og:description" content="Interactive 5-string bass fretboard visualizer with scale visualization">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wam23.github.io">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px 35px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .demo-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .demo-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .demo-description {
+            color: #666;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .iframe-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+        }
+        
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .tech-stack {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+        
+        .tech-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #2c3e50;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+        
+        .tech-item {
+            padding: 20px;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .tech-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .tech-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .tech-type {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .iframe-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎸 Bass Fretboard Visualizer</h1>
+            <p class="subtitle">Interactive 5-String Bass Guitar Learning Tool</p>
+            <a href="bass_fretboard_visualizer.html" class="cta-button">Try It Now</a>
+        </header>
+        
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h3 class="feature-title">Scale Visualization</h3>
+                <p class="feature-description">View major and minor scales with color-coded notes. Root notes, pentatonic notes, and scale tones are clearly marked for easy learning.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎸</div>
+                <h3 class="feature-title">Drop A Tuning</h3>
+                <p class="feature-description">Optimized for 5-string bass in Drop A tuning (A-E-A-D-G). Perfect for metal and progressive music styles.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">Interactive Learning</h3>
+                <p class="feature-description">Click between different scales to see note patterns instantly. Visual feedback helps you memorize fretboard relationships.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3 class="feature-title">Realistic Design</h3>
+                <p class="feature-description">Authentic fretboard appearance with proper string gauges, nut, and position markers for a realistic playing experience.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3 class="feature-title">Responsive Design</h3>
+                <p class="feature-description">Works seamlessly on desktop, tablet, and mobile devices. Practice anywhere, anytime with your bass guitar.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3 class="feature-title">Fast & Lightweight</h3>
+                <p class="feature-description">Pure HTML, CSS, and JavaScript - no dependencies. Loads instantly and works offline once cached.</p>
+            </div>
+        </section>
+        
+        <section class="demo-section">
+            <h2 class="demo-title">Try It Yourself</h2>
+            <p class="demo-description">
+                Experience the interactive fretboard visualizer. Click on different scale buttons to see how notes are arranged across the fretboard. 
+                Perfect for learning scale patterns and improving your music theory knowledge.
+            </p>
+            <div class="iframe-container">
+                <iframe src="bass_fretboard_visualizer.html" title="Bass Fretboard Visualizer Demo"></iframe>
+            </div>
+        </section>
+        
+        <footer>
+            <p>&copy; 2026 Bass Fretboard Visualizer. Built with ❤️ by wam</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+        
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate feature cards on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
